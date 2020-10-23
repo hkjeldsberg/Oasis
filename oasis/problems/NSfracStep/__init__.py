@@ -8,10 +8,10 @@ from oasis.problems import *
 # Default parameters NSfracStep solver
 NS_parameters.update(
     # Physical constants and solver parameters
-    t=0.0,               # Time
-    tstep=0,             # Timestep
-    T=1.0,               # End time
-    dt=0.01,             # Time interval on each timestep
+    t=0.0,  # Time
+    tstep=0,  # Timestep
+    T=1.0,  # End time
+    dt=0.01,  # Time interval on each timestep
 
     # Some discretization options
     # Use Adams Bashforth projection as first estimate for pressure on new timestep
@@ -19,18 +19,18 @@ NS_parameters.update(
     solver="IPCS_ABCN",  # "IPCS_ABCN", "IPCS_ABE", "IPCS", "Chorin", "BDFPC", "BDFPC_Fast"
 
     # Parameters used to tweek solver
-    max_iter=1,                 # Number of inner pressure velocity iterations on timestep
-    max_error=1e-6,             # Tolerance for inner iterations (pressure velocity iterations)
+    max_iter=1,  # Number of inner pressure velocity iterations on timestep
+    max_error=1e-6,  # Tolerance for inner iterations (pressure velocity iterations)
     iters_on_first_timestep=2,  # Number of iterations on first timestep
-    use_krylov_solvers=True,    # Otherwise use LU-solver
+    use_krylov_solvers=True,  # Otherwise use LU-solver
     print_intermediate_info=10,
     print_velocity_pressure_convergence=False,
 
     # Parameters used to tweek output
     plot_interval=10,
-    checkpoint=10,       # Overwrite solution in Checkpoint folder each checkpoint
-    save_step=10,        # Store solution each save_step
-    restart_folder=None, # If restarting solution, set the folder holding the solution to start from here
+    checkpoint=10,  # Overwrite solution in Checkpoint folder each checkpoint
+    save_step=10,  # Store solution each save_step
+    restart_folder=None,  # If restarting solution, set the folder holding the solution to start from here
     output_timeseries_as_vector=True,  # Store velocity as vector in Timeseries
 
     # Choose LES model and set default parameters
@@ -38,10 +38,18 @@ NS_parameters.update(
     les_model='NoModel',
 
     # LES model parameters
-    Smagorinsky=dict(Cs=0.1677),              # Standard Cs, same as OpenFOAM
+    Smagorinsky=dict(Cs=0.1677),  # Standard Cs, same as OpenFOAM
     Wale=dict(Cw=0.325),
     DynamicSmagorinsky=dict(Cs_comp_step=1),  # Time step interval for Cs to be recomputed
     KineticEnergySGS=dict(Ck=0.08, Ce=1.05),
+
+    # Neuman boundary condition on the outlets
+    neumann_facets=[],  # List of facets value(s) in mesh_function to apply boundary condition
+    mesh_function=None,  # Mesh function to mark boundary
+
+    # Back flow stabilization, turned on if back_flow_facets is != [] and mesh_function is not None
+    back_flow_facets=[],  # List of facet value(s) in mesh_function to apply back flow stabilization
+    back_flow_beta=0.2,  # Standard value from Moghadam et al. Comput Mech (2011) 48:277–291
 
     # Parameter set when enabling test mode
     testing=False,
@@ -82,6 +90,14 @@ NS_parameters.update(
 )
 
 
+def pre_boundary_condition(**NS_namespace):
+    """Called after defining the function spaces and functions,
+       but before the boundary
+       conditions.
+    """
+    return {}
+
+
 def velocity_tentative_hook(**NS_namespace):
     """Called just prior to solving for tentative velocity."""
     pass
@@ -100,3 +116,10 @@ def start_timestep_hook(**NS_namespace):
 def temporal_hook(**NS_namespace):
     """Called at end of a timestep."""
     pass
+
+
+def update_prescribed_motion(**NS_namespace):
+    """If the solver has moving boundaries the mesh has to be updated in this function.
+    See problems/NSfracStep/MovingFlag.py for an example."""
+    update_prescribed_motion.Implemented = False
+    return False

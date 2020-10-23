@@ -3,25 +3,18 @@ __date__ = "2013-06-25"
 __copyright__ = "Copyright (C) 2013 " + __author__
 __license__ = "GNU Lesser GPL version 3 or any later version"
 
-from dolfin import *
 import subprocess
-from os import getpid, path
 from collections import defaultdict
-from numpy import array, maximum, zeros
+from os import getpid, path
 
-# UnitSquareMesh(20, 20) # Just due to MPI bug on Scinet
-
-# try:
-#from fenicstools import getMemoryUsage
-
-# except:
+from dolfin import *
 
 
 def getMemoryUsage(rss=True):
     mypid = str(getpid())
     rss = "rss" if rss else "vsz"
     process = subprocess.Popen(['ps', '-o', rss, mypid],
-                                stdout=subprocess.PIPE)
+                               stdout=subprocess.PIPE)
     out, _ = process.communicate()
     mymemory = out.split()[1]
     return eval(mymemory) / 1024
@@ -31,19 +24,19 @@ parameters["linear_algebra_backend"] = "PETSc"
 parameters["form_compiler"]["optimize"] = True
 parameters["form_compiler"]["cpp_optimize"] = True
 parameters["form_compiler"]["representation"] = "uflacs"
-#parameters["form_compiler"]["quadrature_degree"] = 4
-#parameters["form_compiler"]["cache_dir"] = "instant"
+# parameters["form_compiler"]["quadrature_degree"] = 4
+# parameters["form_compiler"]["cache_dir"] = "instant"
 parameters["form_compiler"]["cpp_optimize_flags"] = "-O3"
-#parameters["mesh_partitioner"] = "ParMETIS"
-#parameters["form_compiler"].add("no_ferari", True)
-#set_log_active(False)
+# parameters["mesh_partitioner"] = "ParMETIS"
+# parameters["form_compiler"].add("no_ferari", True)
+# set_log_active(False)
 
 # Default parameters for all solvers
 NS_parameters = dict(
-    nu=0.01,             # Kinematic viscosity
-    folder='results',    # Relative folder for storing results
-    velocity_degree=2,   # default velocity degree
-    pressure_degree=1    # default pressure degree
+    nu=0.01,  # Kinematic viscosity
+    folder='results',  # Relative folder for storing results
+    velocity_degree=2,  # default velocity degree
+    pressure_degree=1  # default pressure degree
 )
 
 NS_expressions = {}
@@ -103,8 +96,10 @@ class OasisMemoryUsage:
         self.memory_vm = MPI.sum(MPI.comm_world, getMemoryUsage(False))
         if MPI.rank(MPI.comm_world) == 0 and verbose:
             info_blue('{0:26s}  {1:10d} MB {2:10d} MB {3:10d} MB {4:10d} MB'.format(s,
-                        int(self.memory - self.prev), int(self.memory),
-                        int(self.memory_vm - self.prev_vm), int(self.memory_vm)))
+                                                                                    int(self.memory - self.prev),
+                                                                                    int(self.memory),
+                                                                                    int(self.memory_vm - self.prev_vm),
+                                                                                    int(self.memory_vm)))
 
 
 # Print memory use up til now
@@ -142,16 +137,18 @@ def recursive_update(dst, src):
             dst[key] = val
     return dst
 
+
 class OasisXDMFFile(XDMFFile, object):
     def __init__(self, comm, filename):
         XDMFFile.__init__(self, comm, filename)
+
 
 def add_function_to_tstepfiles(function, newfolder, tstepfiles, tstep):
     name = function.name()
     tstepfolder = path.join(newfolder, "Timeseries")
     tstepfiles[name] = OasisXDMFFile(MPI.comm_world,
-                                path.join(tstepfolder,
-                                          '{}_from_tstep_{}.xdmf'.format(name, tstep)))
+                                     path.join(tstepfolder,
+                                               '{}_from_tstep_{}.xdmf'.format(name, tstep)))
     tstepfiles[name].function = function
     tstepfiles[name].parameters["rewrite_function_mesh"] = False
 
@@ -211,7 +208,7 @@ def post_import_problem(NS_parameters, mesh, commandline_kwargs,
     if callable(mesh):
         mesh = mesh(**NS_parameters)
 
-    assert(isinstance(mesh, Mesh))
+    assert (isinstance(mesh, Mesh))
 
     # Returned dictionary to be updated in the NS namespace
     d = dict(mesh=mesh)
