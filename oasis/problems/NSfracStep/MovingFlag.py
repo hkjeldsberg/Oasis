@@ -24,7 +24,7 @@ def problem_parameters(commandline_kwargs, NS_parameters, **NS_namespace):
 
     else:
         T = 20
-        dt = 0.05  # 5
+        dt = 0.05
         nu = 0.01
         NS_parameters.update(
             checkpoint=1000,

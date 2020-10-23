@@ -6,7 +6,7 @@ __license__ = "GNU Lesser GPL version 3 or any later version"
 import subprocess
 from collections import defaultdict
 from os import getpid, path
-
+from numpy import array
 from dolfin import *
 
 

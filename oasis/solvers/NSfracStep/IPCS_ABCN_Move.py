@@ -4,6 +4,8 @@ __copyright__ = "Copyright (C) 2013 " + __author__
 __license__ = "GNU Lesser GPL version 3 or any later version"
 
 from dolfin import *
+from ..NSfracStep import *
+from ..NSfracStep import __all__
 
 
 def setup(u_components, u, v, p, q, bcs, les_model, nut_, scalar_components, V, Q, x_, p_, u_, velocity_update_solver,
