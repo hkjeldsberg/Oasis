@@ -1,7 +1,9 @@
+import json
+import sys
+
 from .io import *
 from .utilities import *
-import sys
-import json
+
 
 def convert(input):
     if isinstance(input, dict):
@@ -13,6 +15,7 @@ def convert(input):
     else:
         return input
 
+
 # Parse command-line keyword arguments
 def parse_command_line():
     commandline_kwargs = {}
@@ -21,9 +24,9 @@ def parse_command_line():
             key, value = s.split('=', 1)
         else:
             raise TypeError((s + " Only kwargs separated with '=' sign " +
-                            "allowed. See NSdefault_hooks for a range of " +
-                            "parameters. Your problem file should contain " +
-                            "problem specific parameters."))
+                             "allowed. See NSdefault_hooks for a range of " +
+                             "parameters. Your problem file should contain " +
+                             "problem specific parameters."))
         try:
             value = json.loads(value)
 
@@ -39,4 +42,4 @@ def parse_command_line():
     return commandline_kwargs
 
 # Note to self. To change a dictionary variable through commandline do, e.g.,
-# run NSfracStep velocity_update_solver='{"method":"gradient_matrix"}'
+# oasis NSfracStep velocity_update_solver='{"method":"gradient_matrix"}'

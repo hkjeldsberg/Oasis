@@ -3,24 +3,54 @@ __date__ = "2014-10-03"
 __copyright__ = "Copyright (C) 2014 " + __author__
 __license__ = "GNU Lesser GPL version 3 or any later version"
 
-from dolfin import (assemble, KrylovSolver, LUSolver,  Function,
-    TrialFunction,TestFunction, dx, Vector, Matrix,
-    FunctionSpace, Timer, div, Form, inner, grad,
-    as_backend_type, VectorFunctionSpace, FunctionAssigner, PETScKrylovSolver,
-    PETScPreconditioner, DirichletBC)
-
-from ufl.tensors import ListTensor
+from dolfin import (assemble, Function, TrialFunction, TestFunction, dx, Vector, Matrix, FunctionSpace, Timer, div,
+                    Form, inner, grad, VectorFunctionSpace, FunctionAssigner, PETScKrylovSolver, PETScPreconditioner,
+                    DirichletBC)
 from ufl import Coefficient
+from ufl.tensors import ListTensor
+
 
 # Create some dictionaries to hold work matrices
 class Mat_cache_dict(dict):
     """Items in dictionary are matrices stored for efficient reuse."""
 
+    def __init__(self):
+        self.t = 0
+        self.forms = {}
+
+    def update_t(self, t):
+        if self.t < t:
+            self.t = t
+
+            # Only assmeble each form once, then apply BCs
+            for form in self.forms.keys():
+                assemble(form, tensor=self[(form, self.forms[form][0])])
+
+                # Copy over to other
+                for b in self.forms[form][1:]:
+                    self[(form, b)].empty()
+                    self[(form, b)].axpy(1, self[(form, self.forms[form][0])], True)
+
+            # Apply bcs
+            for form, bcs in self.keys():
+                for bc in bcs:
+                    bc.apply(self[(form, bcs)])
+
     def __missing__(self, key):
         form, bcs = key
-        A = assemble(form)
+        if (form, ()) in self.keys():
+            A = self[(form, ())].copy()
+        else:
+            A = assemble(form)
+
         for bc in bcs:
             bc.apply(A)
+
+        # Add to forms dictionary
+        if form in self.forms.keys():
+            self.forms[form].append(bcs)
+        else:
+            self.forms[form] = [bcs]
 
         self[key] = A
         return self[key]
@@ -36,10 +66,7 @@ class Solver_cache_dict(dict):
         form, bcs, solver_type, preconditioner_type = key
         prec = PETScPreconditioner(preconditioner_type)
         sol = PETScKrylovSolver(solver_type, prec)
-        #sol.prec = prec
-        #sol = KrylovSolver(solver_type, preconditioner_type)
 
-        #sol.parameters["preconditioner"]["structure"] = "same"
         sol.parameters["error_on_nonconvergence"] = False
         sol.parameters["monitor_convergence"] = False
         sol.parameters["report"] = False
@@ -331,7 +358,6 @@ class AssignedVectorFunction(Function):
     """
 
     def __init__(self, u, name="Assigned Vector Function"):
-
         self.u = u
         assert isinstance(u, ListTensor)
         V = u[0].function_space()
@@ -354,7 +380,6 @@ class LESsource(Function):
     """Function used for computing the transposed source to the LES equation."""
 
     def __init__(self, nut, u, Space, bcs=[], name=""):
-
         Function.__init__(self, Space, name=name)
 
         dim = Space.mesh().geometry().dim()
