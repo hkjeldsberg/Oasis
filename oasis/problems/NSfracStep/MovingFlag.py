@@ -10,7 +10,7 @@ from oasis.problems.NSfracStep import *
 set_log_level(99)
 
 
-def problem_parameters(commandline_kwargs, NS_parameters, NS_expressions, **NS_namespace):
+def problem_parameters(commandline_kwargs, NS_parameters, **NS_namespace):
     if "restart_folder" in commandline_kwargs.keys():
         restart_folder = commandline_kwargs["restart_folder"]
         restart_folder = path.join(getcwd(), restart_folder)
@@ -212,7 +212,7 @@ class Flag_x(UserExpression):
             self.counter = -1
 
 
-def pre_boundary_condition(H, b_dist, b_l, f_h, b_h, f_l, L, mesh, **NS_namespace):
+def pre_boundary_condition(H, b_dist, b_l, f_h, L, mesh, **NS_namespace):
     # Mark geometry
     inlet = AutoSubDomain(lambda x, b: b and x[0] <= DOLFIN_EPS)
     walls = AutoSubDomain(lambda x, b: b and (near(x[1], 0) or near(x[1], H)))
@@ -233,8 +233,7 @@ def pre_boundary_condition(H, b_dist, b_l, f_h, b_h, f_l, L, mesh, **NS_namespac
     return dict(boundary=boundary)
 
 
-def create_bcs(V, Q, w_, sys_comp, u_components, mesh, newfolder, f_h,
-               boundary, NS_expressions, tstep, dt, **NS_namespace):
+def create_bcs(V, Q, w_, sys_comp, boundary, NS_expressions, **NS_namespace):
     info_red("Creating boundary conditions")
 
     # Get x_hat (reference domain)
@@ -376,8 +375,7 @@ def update_prescribed_motion(t, dt, wx_, u_components, mesh_sol, bc_mesh, NS_exp
     return move
 
 
-def temporal_hook(t, w_, q_, f, tstep, viz_u, viz_d, viz_p, u_components,
-                  u_vec, viz_w, **NS_namespace):
+def temporal_hook(t, w_, q_, viz_u, viz_p, u_vec, viz_w, **NS_namespace):
     assign(u_vec.sub(0), q_["u0"])
     assign(u_vec.sub(1), q_["u1"])
 
