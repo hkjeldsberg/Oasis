@@ -1,0 +1,21 @@
+# Compiled files
+*.pyc
+
+# Temporary files
+*.vtp
+*.particles
+*.swp
+*~
+
+# OS Specific
+.DS_Store
+
+# IDE files
+.idea
+.idea/workspace.xml
+
+# Setuptools distribution folder.
+/dist/
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
