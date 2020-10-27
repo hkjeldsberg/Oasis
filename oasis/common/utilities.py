@@ -3,6 +3,7 @@ __date__ = "2014-10-03"
 __copyright__ = "Copyright (C) 2014 " + __author__
 __license__ = "GNU Lesser GPL version 3 or any later version"
 
+from IPython import embed
 from dolfin import (assemble, Function, TrialFunction, TestFunction, dx, Vector, Matrix, FunctionSpace, Timer, div,
                     Form, inner, grad, VectorFunctionSpace, FunctionAssigner, PETScKrylovSolver, PETScPreconditioner,
                     DirichletBC)
@@ -131,7 +132,7 @@ class OasisFunction(Function):
             ones = Function(Space)
             ones.vector()[:] = 1.
             self.ML = self.A * ones.vector()
-            self.ML.set_local(1. / self.ML.array())
+            self.ML.set_local(1. / self.ML.get_local())
 
     def assemble_rhs(self):
         """
