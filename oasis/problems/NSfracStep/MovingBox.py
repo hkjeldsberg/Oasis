@@ -17,7 +17,7 @@ def problem_parameters(commandline_kwargs, NS_parameters, **NS_namespace):
         globals().update(NS_parameters)
 
     else:
-        T = 100
+        T = 20
         dt = 0.01
         nu = 0.01
         NS_parameters.update(
@@ -66,8 +66,9 @@ def create_bcs(V, Q, sys_comp, boundary, NS_expressions, **NS_namespace):
     info_red("Creating boundary conditions")
     f = 1 / 10
     A = 1 / 20
-    inlet = Constant(0.0)
     outlet = Constant(0.0)
+
+    inlet = Constant(0.0)
     outlet = Expression("f * 2 * pi * A * sin(2 * pi * f * t)", degree=2, t=0, f=f, A=A)
     noslip = Constant(0.0)
 
@@ -87,6 +88,8 @@ def create_bcs(V, Q, sys_comp, boundary, NS_expressions, **NS_namespace):
     bcp = DirichletBC(Q, Constant(0), boundary, 2)
 
     bcs = dict((ui, []) for ui in sys_comp)
+    # bcs['u0'] = [bcu_out_x, bcu_wall, bcu_in_x]
+    # bcs['u1'] = [bcu_out_y, bcu_wall, bcu_in_y]
     bcs['u0'] = [bcu_out_x, bcu_wall]
     bcs['u1'] = [bcu_out_y, bcu_wall]
     bcs["p"] = [bcp]
@@ -161,7 +164,8 @@ def pre_solve_hook(V, mesh, newfolder, velocity_degree, wu_, x_, u_components, b
                 coordinates=coordinates, position=position, alfa=alfa)
 
 
-def update_prescribed_motion(t, dt, wx_, u_components, mesh_sol, bc_mesh, NS_expressions, A_cache, position, a_mesh,
+def update_prescribed_motion(t, dt, w_, dof_map, coordinates, wx_, u_components, mesh_sol, bc_mesh, NS_expressions,
+                             A_cache, position, a_mesh,
                              L_mesh, mesh, **NS_namespace):
     # Update time
     for key, value in NS_expressions.items():
@@ -172,25 +176,15 @@ def update_prescribed_motion(t, dt, wx_, u_components, mesh_sol, bc_mesh, NS_exp
     for ui in u_components:
         # Solve for d and w
         A_mesh = A_cache[(a_mesh, tuple(bc_mesh[ui]))]
-
         [bc.apply(L_mesh[ui]) for bc in bc_mesh[ui]]
-
-        t1 = OasisTimer("Mesh solver")
         mesh_sol.solve(A_mesh, wx_[ui], L_mesh[ui])
-        t1.stop()
 
-    position()
-    position.vector()[:] *= dt
-
-    # Move mesh
-    arr = position.vector().get_local()
-    if 1e-15 < abs(arr.min()) + abs(arr.max()):
-        log_level = get_log_level()
-        set_log_level(99)
-        ALE.move(mesh, position)
-        mesh.bounding_box_tree().build(mesh)
-        set_log_level(log_level)
-        move = True
+        # Move mesh
+        arr = w_[ui].vector().get_local()
+        mesh_tolerance = 1e-15
+        if mesh_tolerance < abs(arr.min()) + abs(arr.max()):
+            coordinates[:, int(ui[-1])] += (arr * dt)[dof_map]
+            move = True
 
     return move
 
