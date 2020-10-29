@@ -33,16 +33,17 @@ def problem_parameters(commandline_kwargs, NS_parameters, NS_expressions, **NS_n
             St=0.2280,  # Strouhal number
             F=1.00,  # Frequency ratio
             # Simulation parameters
-            T=0.1,
-            dt=0.001,
-            velocity_degree=2,
+            T=1,
+            dt=5e-05,
+            # dt=0.001,
+            velocity_degree=1,
             pressure_degree=1,
             # mesh_path="mesh/cylinder_original.xml",
             mesh_path="mesh/cylinder_refined.xml",
             folder="oscillating_circle_results",
             use_krylov_solvers=True,
             max_iter=2,  # 20 # Vary this
-            max_error=1E-6,
+            # max_error=1E-6,
             plot_mesh=False,
         )
 
@@ -177,8 +178,10 @@ def pre_solve_hook(V, p_, u_, nu, mesh, newfolder, velocity_degree, u_components
 
     mesh_sol.parameters.update(krylov_solvers)
     coordinates = mesh.coordinates()
-    #dof_map = vertex_to_dof_map(V)
-    dof_map = V.dofmap().entity_dofs(mesh, 0)
+    if velocity_degree == 1:
+        dof_map = vertex_to_dof_map(V)
+    else:
+        dof_map = V.dofmap().entity_dofs(mesh, 0)
 
     return dict(viz_p=viz_p, viz_u=viz_u, viz_w=viz_w, u_vec=u_vec, mesh_sol=mesh_sol, bc_mesh=bc_mesh, dof_map=dof_map,
                 a_mesh=a_mesh, L_mesh=L_mesh, n=n, forces=forces, coordinates=coordinates)
@@ -227,7 +230,7 @@ def temporal_hook(t, tstep, V, w_, q_, max_iter, forces, f, U, diam, nu, viz_u, 
     assign(u_vec.sub(1), q_["u1"])
 
     viz_u.write(u_vec, t)
-    #viz_p.write(q_["p"], t)
+    # viz_p.write(q_["p"], t)
     viz_w.write(w_["u0"], t)
     viz_w.write(w_["u1"], t)
 
